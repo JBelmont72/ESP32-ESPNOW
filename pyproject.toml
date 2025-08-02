@@ -1,5 +1,5 @@
 [project]
-name = "micropython-esp32-esp8266"
+name = "ESP32_ESPNOW"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
