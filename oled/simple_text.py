@@ -1,8 +1,8 @@
 from machine import Pin, SoftI2C
 import ssd1306
 
-SDA_PIN = 22
-SCL_PIN = 23
+SDA_PIN = 21
+SCL_PIN = 22
 
 # using SoftI2C
 i2c = SoftI2C(sda=Pin(SDA_PIN), scl=Pin(SCL_PIN))
