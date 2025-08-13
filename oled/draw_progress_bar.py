@@ -5,7 +5,8 @@ import time
 
 # using default address 0x3C
 i2c = SoftI2C(sda=Pin(22), scl=Pin(23))
-display = ssd1306.SSD1306_I2C(128, 64, i2c)
+
+display = ssd1306.SSD1306_I2C(128, 64, i2c) # the constructor
 
 display.fill(0)                         # fill entire screen with colour=0
 display.rect(10, 10, 107, 43, 1)        # draw a rectangle outline 10,10 to width=107, height=53, colour=1

@@ -15,6 +15,8 @@ Understanding the Logo Data
 The qmk_logo array contains pixel data for a logo, where each byte represents a column of pixels. Each bit in the byte corresponds to a pixel's state (on or off). In MicroPython, you can create a similar array to represent your logo.
 '''
 '''
+#1️⃣ OLED program with I²C device list first
+#This one lists all detected I²C devices, then initializes the OLED if found.
 import time
 from machine import Pin, I2C
 import ssd1306
