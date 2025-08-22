@@ -6,7 +6,7 @@
 # Mac Address for module #3 (my first)    b'\xb0\xb2\x1c\xa9:\\'  Device MAC Address: B0:B2:1C:A9:3A:5C
 # Mac Address for ESP module #4          b'\xb0\xb2\x1c\xa8\x9b`'	Device MAC Address: B0:B2:1C:A8:9B:60 note the slight difference in the binary print out with the `' at end
 # Mac Address for LilyTTGO number 1  MAC:                d4:d4:da:e0:8f:c4
-## Mac address for LilyGo T-Display 2 MAC:               d4:d4:da:e0:2d:50
+# # Mac address for LilyGo T-Display 2 MAC:               d4:d4:da:e0:2d:50
 
 import network
 import aioespnow
