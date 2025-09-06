@@ -3,7 +3,7 @@
 from machine import Pin
 from utime import sleep_ms
 
-ON_BOARD_PIN = 2
+ON_BOARD_PIN = 21
 led_pin = Pin(ON_BOARD_PIN, Pin.OUT)
 
 while True:

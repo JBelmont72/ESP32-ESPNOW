@@ -17,9 +17,11 @@ def main():
 
 
 t1 = time.perf_counter()
+t3=time.time_ns()
 # main()## this runs the program but does not return the result1,result2
 results = main()
 print(results)
-
+t4 =time.time_ns()
 t2 = time.perf_counter()
-print(f"Finished in {t2 - t1:.2f} seconds")
+print(f'finishedL {t4-t3}')
+print(f"Finished in {t2 - t1:.3f} seconds")
