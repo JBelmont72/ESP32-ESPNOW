@@ -380,3 +380,183 @@ Full UART packet to DFPlayer:
 ====================================
 '''
 
+
+''' 16 Sept 2025 version where I explored the correlation of datasheet (in ComputerSetup in 'Documents)' and  checksum 
+'''
+from machine import Pin, I2C, UART
+import utime
+from ssd1306 import SSD1306_I2C
+
+# -----------------------------
+# DFPlayer Mini driver
+# -----------------------------
+class DFPlayerMini:
+    START_BYTE = 0x7E
+    VERSION = 0xFF
+    LENGTH = 0x06
+    END_BYTE = 0xEF
+
+    def __init__(self, uart):
+        self.uart = uart
+
+    def _checksum(self, cmd, feedback, param):
+        """Calculate DFPlayer checksum (two's complement)."""
+        param_high = (param >> 8) & 0xFF
+        param_low = param & 0xFF
+        total = (self.VERSION + self.LENGTH + cmd + feedback + param_high + param_low)
+        checksum = 0xFFFF - total + 1
+        return (checksum >> 8) & 0xFF, checksum & 0xFF
+
+    def _send(self, cmd, param=0, feedback=0):
+        """Build and send DFPlayer command packet."""
+        param_high = (param >> 8) & 0xFF
+        param_low = param & 0xFF
+        cks_high, cks_low = self._checksum(cmd, feedback, param)
+        packet = bytearray([
+            self.START_BYTE,
+            self.VERSION,
+            self.LENGTH,
+            cmd,
+            feedback,
+            param_high,
+            param_low,
+            cks_high,
+            cks_low,
+            self.END_BYTE
+        ])
+        self.uart.write(packet)
+
+    def play_folder_file(self, folder, file):
+        """Play specific folder/file."""
+        param = (folder << 8) | file
+        self._send(0x0F, param)
+
+    def volume(self, level):
+        """Set volume (0–30)."""
+        self._send(0x06, level)
+
+
+# -----------------------------
+# Keypad handler
+# -----------------------------
+class Keypad:
+    KEYS = [
+        ["1", "2", "3", "A"],
+        ["4", "5", "6", "B"],
+        ["7", "8", "9", "C"],
+        ["*", "0", "#", "D"]
+    ]
+
+    def __init__(self, row_pins, col_pins):
+        self.rows = [Pin(p, Pin.OUT) for p in row_pins]
+        self.cols = [Pin(p, Pin.IN, Pin.PULL_DOWN) for p in col_pins]
+        self.last_key = None
+        self.last_time = 0
+        self.debounce_ms = 200
+
+    def scan(self):
+        """Scan keypad and return pressed key, or None."""
+        for i, row in enumerate(self.rows):
+            row.value(1)
+            for j, col in enumerate(self.cols):
+                if col.value() == 1:
+                    key = self.KEYS[i][j]
+                    now = utime.ticks_ms()
+                    if (self.last_key != key or
+                        utime.ticks_diff(now, self.last_time) > self.debounce_ms):
+                        self.last_key = key
+                        self.last_time = now
+                        row.value(0)
+                        return key
+            row.value(0)
+        return None
+
+
+# -----------------------------
+# Player controller with OLED
+# -----------------------------
+class PlayerController:
+    def __init__(self):
+        # OLED setup
+        i2c = I2C(0, scl=Pin(17), sda=Pin(16))
+        self.oled = SSD1306_I2C(128, 64, i2c)
+
+        # DFPlayer Mini setup
+        uart = UART(1, baudrate=9600, tx=Pin(4), rx=Pin(5))
+        self.dfplayer = DFPlayerMini(uart)
+        self.dfplayer.volume(20)
+
+        # Keypad setup
+        self.keypad = Keypad(
+            row_pins=[6, 7, 8, 9],     # adjust to your wiring
+            col_pins=[10, 11, 12, 13]  # adjust to your wiring
+        )
+
+        # State
+        self.folder = 1
+        self.file = 1
+        self.buffer = ""
+
+    def display(self, msg1, msg2=""):
+        self.oled.fill(0)
+        self.oled.text("DFPlayer", 0, 0)
+        self.oled.text(msg1, 0, 20)
+        if msg2:
+            self.oled.text(msg2, 0, 40)
+        self.oled.show()
+
+    def process_key(self, key):
+        if key.isdigit():
+            self.buffer += key
+            self.display("Input: " + self.buffer)
+            if len(self.buffer) == 2:
+                self.file = int(self.buffer)
+                self.buffer = ""
+                self.dfplayer.play_folder_file(self.folder, self.file)
+                self.display("Play", f"Folder {self.folder} File {self.file}")
+
+        elif key == "A":  # Increase folder
+            self.folder = min(self.folder + 1, 99)
+            self.display("Folder ->", str(self.folder))
+
+        elif key == "B":  # Decrease folder
+            self.folder = max(self.folder - 1, 1)
+            self.display("Folder <-", str(self.folder))
+
+        elif key == "C":  # Volume up
+            self.dfplayer.volume(25)
+            self.display("Volume", "Up")
+
+        elif key == "D":  # Volume down
+            self.dfplayer.volume(10)
+            self.display("Volume", "Down")
+
+        elif key == "*":  # Clear buffer
+            self.buffer = ""
+            self.display("Input cleared")
+
+        elif key == "#":  # Replay current file
+            self.dfplayer.play_folder_file(self.folder, self.file)
+            self.display("Replay", f"Folder {self.folder} File {self.file}")
+
+    def run(self):
+        self.display("Ready")
+        while True:
+            key = self.keypad.scan()
+            if key:
+                self.process_key(key)
+            utime.sleep_ms(50)
+
+
+# -----------------------------
+# Main
+# -----------------------------
+def main():
+    controller = PlayerController()
+    controller.run()
+
+
+if __name__ == "__main__":
+    main()
+
+
