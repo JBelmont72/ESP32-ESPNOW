@@ -1,5 +1,9 @@
 https://chatgpt.com/backend-api/estuary/content?id=file-Vw7RpoQk8Q8XB38fwECd2s&ts=488346&p=fs&cid=1&sig=3a26635c0a3c77f30603caf18c240fad4bd67ab20d96c84c51d93fa8674fe88f&v=0
 
+/Users/judsonbelmont/Documents/SharedFolders/ESP32/ESP32-ESPNOW/DFPlayer/UART_test.py.  has the first program using the DFPlayer mini for which i was alble to use .aiff  files 
+
+
+
 3.1. Serial Communication Format of dataheet in documents/computerSetup
 Support for asynchronous serial communication mode via CP serial sending commands Communication Standard:9600 bps
 

@@ -220,4 +220,66 @@ oled.fill(0)
 oled.show()
 #####
 
+# why do a number of oled programs use: from machine import Pin, SoftI2C import ssd1306 import framebuf # using default address 0x3C i2c = SoftI2C(sda=Pin(22), scl=Pin(23)) display = ssd1306.SSD1306_I2C(128, 64, i2c) constructors ?
+
+That’s because in MicroPython there are **two kinds of I²C objects** you can use:
+
+---
+
+## **1️⃣ `I2C` (hardware I²C)**
+
+* Uses the ESP32’s built-in hardware I²C peripheral.
+* Very fast and efficient.
+* On ESP32, it supports *any* GPIO pins (pin-muxed in software), but under the hood it still uses the hardware controller.
+* The constructor looks like:
+
+  ```python
+  from machine import Pin, I2C
+  i2c = I2C(0, scl=Pin(22), sda=Pin(21))  # bus ID 0
+  ```
+* **Why use it?** → Faster and uses less CPU.
+
+---
+
+## **2️⃣ `SoftI2C` (bit-banged I²C)**
+
+* Implements I²C in **pure software**, toggling pins manually.
+* Works on *any* two GPIO pins, even if the hardware I²C peripheral is busy or unavailable.
+* The constructor looks like:
+
+  ```python
+  from machine import Pin, SoftI2C
+  i2c = SoftI2C(sda=Pin(22), scl=Pin(23))
+  ```
+* **Why use it?**
+
+  * Some boards’ default hardware I²C pins are already in use.
+  * Hardware I²C may be buggy on certain MicroPython versions or pins.
+  * Easier for beginners — no bus ID numbers, just SDA and SCL pins.
+
+---
+
+## **3️⃣ Why `framebuf` is sometimes imported**
+
+* The `ssd1306` driver uses `framebuf` internally to store the display’s pixel data in RAM before sending it to the OLED.
+* If you want to draw shapes or manipulate pixels yourself, you can call `framebuf` functions directly.
+* Example:
+
+  ```python
+  import framebuf
+  # draw lines, rectangles, etc.
+  ```
+
+---
+
+## **In short**
+
+* `I2C(...)` → hardware, faster, bus ID required.
+* `SoftI2C(...)` → software, more flexible, slightly slower.
+* Both work with the `ssd1306.SSD1306_I2C(...)` constructor.
+
+---
+
+If you want, I can make your OLED auto-detection script work with **either hardware I²C or SoftI2C** — so it will try hardware first, then fall back to software if needed.
+That would make it *almost unbreakable* for pin changes.
 
