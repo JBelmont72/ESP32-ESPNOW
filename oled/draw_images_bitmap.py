@@ -4,7 +4,7 @@ import images_repo
 import time
 from machine import Pin, I2C, SoftI2C
 import ssd1306
-import _sysconfigdata__darwin_darwin
+import sys
 # Pin configuration
 SCL_PIN = 22
 SDA_PIN = 21
@@ -109,7 +109,7 @@ try:
             oled.show()
             time.sleep_ms(2000)
         
-except KeyboardInterrrupt:
+except KeyboardInterrupt:
     print('exiting program')
     oled.fill(0) 
     oled.show()
