@@ -182,4 +182,3 @@ Try I2C(0, scl=Pin(22), sda=Pin(21)) first — it works for many ESP32 dev board
 If nothing shows up in a scan, try I2C(1, ...).
 If still nothing, try SoftI2C(...).
 Use i2c.scan() to see what’s on each bus.
-https://sdmntpraustraliaeast.oaiusercontent.com/files/00000000-5368-61fa-adb3-9fe153c5322e/raw?se=2025-08-11T13%3A57%3A45Z&sp=r&sv=2024-08-04&sr=b&scid=26e21c4e-dc4b-5807-bb74-c0068853f6ab&skoid=f71d6506-3cac-498e-b62a-67f9228033a9&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-08-11T09%3A52%3A57Z&ske=2025-08-12T09%3A52%3A57Z&sks=b&skv=2024-08-04&sig=DV2rFWTWJ8VYoqo51gLMYIoatuN9yqqyzPFpeLvPAlg%3D
