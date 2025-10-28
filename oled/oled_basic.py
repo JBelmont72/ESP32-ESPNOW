@@ -241,3 +241,81 @@ except KeyboardInterrupt:
 #     time.sleep(2)  # Display the logo for 2 seconds
 #     fade_display(oled)  # Apply the fade effect
 #     time.sleep(2)  # Wait before repeating
+
+
+'''
+import time		##works same as above but added extra squares and automatic i2c address identification
+from machine import Pin, I2C
+import ssd1306
+import random
+# Your I2C pin configuration (ESP32: GPIO 22 = SCL, GPIO 21 = SDA)	#works 28 oct 25
+SCL_PIN = 22 #esp32
+SDA_PIN = 21
+
+#SCL_PIN = 1	#Pico
+#SDA_PIN = 0
+# Step 1: Try both I2C bus IDs (0 and 1) to find the display
+i2c = None
+oled_address = None
+
+for bus_id in (0, 1):
+    try:
+        temp_i2c = I2C(bus_id, scl=Pin(SCL_PIN), sda=Pin(SDA_PIN))
+        devices = temp_i2c.scan()
+        if devices:
+            for addr in devices:
+                if addr in (0x3C, 0x3D):  # Common SSD1306 addresses
+                    i2c = temp_i2c
+                    oled_address = addr
+                    break
+    except Exception as e:
+        pass  # Ignore errors and try next bus
+    
+    if i2c:  # Stop searching if found
+        break
+
+if i2c is None or oled_address is None:
+    print("❌ OLED not found! Check wiring and power.")
+    while True:
+        pass
+
+print(f"✅ OLED found at address 0x{oled_address:02X} on I2C bus {i2c}")
+
+# Step 2: Initialize OLED
+oled = ssd1306.SSD1306_I2C(128, 64, i2c, addr=oled_address)
+
+# Example logo data (8x8 pixels)
+logo = [
+    0b11111111,
+    0b10000001,
+    0b10000001,
+    0b10000001,
+    0b10000001,
+    0b10000001,
+    0b11111111,
+    0b00000000
+]
+
+def render_logo(oled):
+    for i in range(len(logo)):
+        for j in range(8):  # Each byte represents 8 pixels
+            if logo[i] & (1 << (7 - j)):  # Check each bit
+                oled.pixel(j, i, 1)  # Turn on the pixel
+                oled.pixel(j+10,i+10,1)
+    oled.show()
+
+def fade_display(oled):
+    for y in range(0, 64):
+        for x in range(0, 128):
+            if random.randint(0, 1):
+                oled.pixel(x, y, 0)  # Turn off the pixel
+    oled.show()
+
+# Main loop
+while True:
+    oled.fill(0)  # Clear the display
+    render_logo(oled)  # Render the logo
+    time.sleep(2)  # Display the logo for 2 seconds
+    fade_display(oled)  # Apply the fade effect
+    time.sleep(2)  # Wait before repeating
+'''
