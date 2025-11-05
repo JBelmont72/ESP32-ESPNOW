@@ -347,3 +347,14 @@ if __name__ == "__main__":
 
 
 ```
+
+# DFPLayer_UDP versions :
+/Users/judsonbelmont/Documents/SharedFolders/ESP32/ESP32-ESPNOW/DFPlayer-Project/UDP_version/main.py
+/Users/judsonbelmont/Documents/SharedFolders/ESP32/ESP32-ESPNOW/DFPlayer-Project/UDP_version/dfplayer_server.py
+/Users/judsonbelmont/Documents/SharedFolders/ESP32/ESP32-ESPNOW/DFPlayer-Project/UDP_version/dfplayer_client.py
+/Users/judsonbelmont/Documents/SharedFolders/ESP32/ESP32-ESPNOW/DFPlayer-Project/UDP_version/checkBusy.py
+'''
+link to obsidian file. /Users/judsonbelmont/Vaults/myVault_1/2024/UDP DFPlayer.md
+this is the first version of the client which runs on the browser
+/Users/judsonbelmont/Documents/SharedFolders/ESP32/ESP32-ESPNOW/DFPlayer-Project/UDP_version/dfplayer_client1.py
+'''

@@ -8,10 +8,28 @@ Chat https://chatgpt.com/c/68c6e1a2-80ac-832e-9063-4c99fc53b034
 from machine import Pin
 import time
 
-# --- keypad setup (4x4 in your wiring) ---
-rows = [Pin(r, Pin.OUT) for r in (14,27,26,25)]   # adjust GPIO pins
-cols = [Pin(c, Pin.IN, Pin.PULL_DOWN) for c in (33,32,35,34)]
+# # --- keypad setup (4x4 in your wiring) for esp32 ---
+# rows = [Pin(r, Pin.OUT) for r in (14,27,26,25)]   # adjust GPIO pins
+# cols = [Pin(c, Pin.IN, Pin.PULL_DOWN) for c in (33,32,35,34)]
+# --- keypad setup (4x4 in your wiring) for Lily Go T-Display ---
+# rows = [Pin(r, Pin.OUT) for r in (37,38,35,32)]   # adjust GPIO pins
+# cols = [Pin(c, Pin.IN, Pin.PULL_DOWN) for c in (33,25,26,27)]
+rows = [Pin(r, Pin.OUT) for r in (27,26,25,33)]   # adjust GPIO pins
+cols = [Pin(c, Pin.IN, Pin.PULL_DOWN) for c in (32,35,38,37)]
 
+
+#Define rows and columns (adjust GPIO pins according to your wiring)
+# rows = [Pin(r, Pin.OUT) for r in (27, 26, 25, 32)]  # Row pins
+rows = [Pin(r, Pin.OUT) for r in (32,25,26,27)]  # Row pins
+# cols = [Pin(c, Pin.IN, Pin.PULL_DOWN) for c in (36,37, 38, 39)]  # Column pins
+# cols = [Pin(c, Pin.IN, Pin.PULL_DOWN) for c in (39,38,37,36)]  # Column pins
+cols = [Pin(c, Pin.IN, Pin.PULL_DOWN) for c in (36,37,38,39)]  # Column pins
+
+
+
+
+##rows = 27,26,25,33
+## cols = 32,35,38,37
 keys = [
     ["1","2","3","A"],
     ["4","5","6","B"],
@@ -86,8 +104,10 @@ def scan_keypad():
 '''
 def main():
     last_key_pressed = None
+    print(keys)
     while True:
         pressed_key = scan_keypad()
+        print(pressed_key,last_key_pressed)
 
         if pressed_key and pressed_key != last_key_pressed:
             print(f"Key Pressed: {pressed_key}")

@@ -1,5 +1,5 @@
 '''
-
+THE LAST PROGRAM WORKS GREAT
 # MicroPython example: make the TX pin an input (tri-state)
 from machine import Pin
 tx_pin = Pin(17, Pin.IN)   # stop driving TX
