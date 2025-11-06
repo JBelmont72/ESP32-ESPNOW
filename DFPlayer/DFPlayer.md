@@ -358,3 +358,7 @@ link to obsidian file. /Users/judsonbelmont/Vaults/myVault_1/2024/UDP DFPlayer.m
 this is the first version of the client which runs on the browser
 /Users/judsonbelmont/Documents/SharedFolders/ESP32/ESP32-ESPNOW/DFPlayer-Project/UDP_version/dfplayer_client1.py
 '''
+
+
+THIS program tests uart very well. 5 Nov 2025
+[text](UART_test_debug.py)

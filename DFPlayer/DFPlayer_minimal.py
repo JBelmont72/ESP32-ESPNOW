@@ -288,7 +288,7 @@ Which would you like to try next?
 from machine import UART, Pin
 import time
 
-uart = UART(2, baudrate=9600, tx=Pin(17), rx=Pin(16))  # adjust pins
+uart = UART(2, baudrate=9600, tx=Pin(17), rx=Pin(13))  # adjust pins
 
 def send_cmd(cmd, param=0, feedback=1):
     buf = bytearray(10)

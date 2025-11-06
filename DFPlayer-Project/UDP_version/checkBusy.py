@@ -9,14 +9,14 @@ from machine import UART, Pin
 import time
 
 # UART setup (same as working script)
-uart = UART(2, baudrate=9600, tx=Pin(17), rx=Pin(16))
+uart = UART(2, baudrate=9600, tx=Pin(17), rx=Pin(13))
 busy = Pin(5, Pin.IN)
 
 def clear_uart():
     while uart.any():
         uart.read()
 
-def send_cmd(cmd, param=0, feedback=1):
+def send_cmd(cmd, param=0, feedback=0):
     buf = bytearray(10)
     buf[0] = 0x7E
     buf[1] = 0xFF

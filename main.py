@@ -139,7 +139,7 @@ import utime
 import sys
 
 # === CONFIGURATION ===
-BUTTON_PIN = 26            # active HIGH button to 3.3V
+BUTTON_PIN = 14            # active HIGH button to 3.3V
 LONG_PRESS_TIME_MS = 4000  # 4 seconds threshold
 DEBOUNCE_MS = 50
 

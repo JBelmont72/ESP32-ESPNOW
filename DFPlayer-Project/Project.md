@@ -8,3 +8,6 @@
 
 
 DFPlayer_2.py last program works greats 
+
+/Users/judsonbelmont/Documents/SharedFolders/ESP32/ESP32-ESPNOW/DFPlayer-Project/UDP_version/checkBusy.py. works!
+/Users/judsonbelmont/Documents/SharedFolders/ESP32/ESP32-ESPNOW/DFPlayer-Project/DFPlayer_1.py              works!

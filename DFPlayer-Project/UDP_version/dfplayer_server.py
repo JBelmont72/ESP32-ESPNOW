@@ -150,8 +150,8 @@ SUBNET = "255.255.255.0"
 GATEWAY = "10.0.0.1"
 # ===================================================
 
-# ===================== DFPLAYER SETUP =====================
-uart = UART(2, baudrate=9600, tx=17, rx=16)  # TX→RX, RX→TX
+# ===================== DFPLAYER SETUP =====================rx 16 for esp32 and 13 for lilygo
+uart = UART(2, baudrate=9600, tx=17, rx=13)  # TX→RX, RX→TX
 BUSY = Pin(5, Pin.IN)                         # BUSY pin
 LED_BUSY = Pin(2, Pin.OUT)                    # Optional LED connected to BUSY
 

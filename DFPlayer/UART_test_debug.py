@@ -1,4 +1,5 @@
 '''
+DFPlayer/UART_test_debug.py
 How to test
 Wire the connections:
 Pico GP0 → RX of USB-UART adapter or other microcontroller
@@ -30,13 +31,13 @@ Pins:
 
 Baud rate: 9600 bps (both devices must match).
 """
-
+## NOTE THIS WORKS AND CONFIRMS THAT UART IS PROPERLY CONFIGURED
 from machine import UART, Pin
 import time
 
 # === SETUP UART ===
-print("Setting up UART0 on TX=GP0, RX=GP1 at 9600 baud...")
-uart = UART(0, baudrate=9600, tx=Pin(0), rx=Pin(1))
+print("Setting up UART0 on TX=GP17, RX=GP13 at 9600 baud...")
+uart = UART(2, baudrate=9600, tx=Pin(17), rx=Pin(13))
 
 print("UART setup complete.\n")
 print("Tips:")
@@ -62,7 +63,8 @@ while True:
         if data:
             try:
                 decoded = data.decode()  # try to decode to text
-            except UnicodeDecodeError:
+            # except UnicodeDecodeError:  # for regular python
+            except Exception:# for micropython
                 decoded = str(data)  # fallback to raw bytes
             print(f"[DEBUG] Received: {decoded}")
             uart.write(b"Echo: " + data + b"\r\n")

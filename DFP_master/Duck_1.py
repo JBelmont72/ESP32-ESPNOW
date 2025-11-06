@@ -61,7 +61,8 @@ import time
 
 # Initialize UART (TX = Pin 17, RX = Pin 16)
 # uart = UART(2, baudrate=9600, tx=19, rx=21)
-uart = UART(2, baudrate=9600, tx=17, rx=16)
+# uart = UART(2, baudrate=9600, tx=17, rx=16)# for esp32
+uart = UART(2, baudrate=9600, tx=17, rx=13)# for lilygo T-display
 pin_led = Pin(5, Pin.OUT)  # Optional: Used for debugging
 
 # Send a test command

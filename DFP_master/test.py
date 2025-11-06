@@ -118,7 +118,7 @@
 from machine import UART, Pin
 import time
 
-uart = UART(2, baudrate=9600, tx=Pin(17), rx=Pin(16))  # adjust if needed
+uart = UART(2, baudrate=9600, tx=Pin(17), rx=Pin(13))  # adjust if needed
 
 buf = bytearray()
 
