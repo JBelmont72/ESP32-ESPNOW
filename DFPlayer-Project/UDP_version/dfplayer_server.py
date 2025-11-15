@@ -238,7 +238,8 @@ def update_busy_led():
 def connect_wifi():
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    wlan.ifconfig((STATIC_IP, SUBNET, GATEWAY, STATIC_IP))
+    # wlan.ifconfig((STATIC_IP, SUBNET, GATEWAY, STATIC_IP))# incorrect last should be DNS server not static ip
+    wlan.ifconfig((STATIC_IP, SUBNET, GATEWAY, "8.8.8.8"))
     if not wlan.isconnected():
         print("📡 Connecting to Wi-Fi...")
         wlan.connect(SSID, PASSWORD)

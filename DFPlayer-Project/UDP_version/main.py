@@ -11,7 +11,7 @@ import network
 import dfplayer_server
 
 # ==================== CONFIG ====================
-BUTTON_PIN = 23
+BUTTON_PIN = 33
 LONG_PRESS_TIME_MS = 4000
 DEBOUNCE_DELAY_MS = 50
 SSID = "NETGEAR48"
@@ -61,6 +61,7 @@ def run_program():
 
             wlan = connect_wifi()
             if wlan:
+                print(f'ip:  {ip}')
                 ip = STATIC_IP
                 dfplayer_server.main()
             else:

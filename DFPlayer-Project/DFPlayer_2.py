@@ -331,7 +331,7 @@ import time
 # ------------------------------ Works with 3.3 volt setup 
 # Hardware Setup
 # ------------------------------
-uart = UART(2, baudrate=9600, tx=Pin(17), rx=Pin(16))   # UART2 for DFPlayer
+uart = UART(2, baudrate=9600, tx=Pin(17), rx=Pin(13))   # UART2 for DFPlayer
 busy_pin = Pin(5, Pin.IN)                               # BUSY pin from DFPlayer (LOW = playing)
 
 # ------------------------------
