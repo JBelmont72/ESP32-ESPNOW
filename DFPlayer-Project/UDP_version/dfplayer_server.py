@@ -1,309 +1,334 @@
-'''the dfplayer controlling program which will be called by the main.py
-
-file in obsidian:  /Users/judsonbelmont/Vaults/myVault_1/2024/UDP DFPlayer.md
-/Users/judsonbelmont/Documents/SharedFolders/ESP32/ESP32-ESPNOW/DFPlayer-Project/UDP_version/dfplayer_server.py
 '''
+nov 16 2025   full dfplayer_server.py with status, volume, busy pin & led blink
+non blocking version of dfplayer_server.py 
+run this on esp32 , the client.py is run on python browser with python 3.13.9(.venv)
+ 
+
 '''
-import socket
-import utime
-from machine import UART, Pin
+# dfplayer_server.py — Full DFPlayer UDP Server with status, volume, busy pin & LED blink
+# from machine import Pin, UART
+# import socket
+# import time
 
-# ===================== CONFIG =====================
-UDP_PORT = 8888
-# ===================================================
+# # =========================
+# # DFPLAYER SETUP
+# # =========================
+# uart = UART(2, baudrate=9600, tx=17, rx=16)
+# busy = Pin(5, Pin.IN)     # DFPlayer BUSY pin (LOW = playing)
+# led  = Pin(2, Pin.OUT)    # Status LED
 
-# ===================== DFPLAYER SETUP =====================
-uart = UART(2, baudrate=9600, tx=17, rx=16)  # TX→RX, RX→TX
-BUSY = Pin(5, Pin.IN)                         # BUSY pin (LOW = playing)
-VOLUME = 20                                   # Default volume (0–30)
-# ===========================================================
+# current_volume = 20
+# last_track = None
+# last_cmd = "NONE"
 
-# -------------------- DFPLAYER COMMANDS --------------------
-def send_cmd(cmd, param1=0, param2=0):
-    buf = bytearray(10)
-    buf[0] = 0x7E
-    buf[1] = 0xFF
-    buf[2] = 0x06
-    buf[3] = cmd
-    buf[4] = 0x00
-    buf[5] = param1
-    buf[6] = param2
-    checksum = 0 - (0xFF + 0x06 + cmd + 0x00 + param1 + param2)
-    buf[7] = (checksum >> 8) & 0xFF
-    buf[8] = checksum & 0xFF
-    buf[9] = 0xEF
-    uart.write(buf)
+# # =========================
+# # DFPLAYER LOW-LEVEL COMMAND
+# # =========================
+# def df_send(cmd, p1=0, p2=0):
+#     """Send valid DFPlayer Mini command with checksum."""
+#     buf = bytearray(10)
+#     buf[0] = 0x7E
+#     buf[1] = 0xFF
+#     buf[2] = 0x06
+#     buf[3] = cmd
+#     buf[4] = 0x00     # no feedback
+#     buf[5] = p1
+#     buf[6] = p2
 
-def play_track(num):
-    print("🎵 Playing track:", num)
-    send_cmd(0x03, 0x00, num)
-    
-    # Wait briefly and check BUSY pin
-    utime.sleep_ms(50)  # DFPlayer needs a moment to start
-    busy_state = BUSY.value()
-    if busy_state == 0:
-        print("▶️ DFPlayer started playing, BUSY LOW")
-    else:
-        print("⚠️ DFPlayer did not start playing, BUSY HIGH — check track or SD card")
+#     checksum = 0xFFFF - (buf[1] + buf[2] + buf[3] +
+#                          buf[4] + buf[5] + buf[6]) + 1
 
-def set_volume(vol):
-    global VOLUME
-    vol = max(0, min(vol, 30))
-    VOLUME = vol
-    send_cmd(0x06, 0x00, vol)
-    print("🔊 Volume set to:", vol)
+#     buf[7] = (checksum >> 8) & 0xFF
+#     buf[8] = checksum & 0xFF
+#     buf[9] = 0xEF
 
-def pause():
-    send_cmd(0x0E)
-    print("⏸️ Paused")
+#     uart.write(buf)
 
-def resume():
-    send_cmd(0x0D)
-    print("▶️ Resumed")
+# # =========================
+# # HIGH-LEVEL COMMANDS
+# # =========================
 
-def stop():
-    send_cmd(0x16)
-    print("⏹️ Stopped")
+# def df_play(track):
+#     global last_track, last_cmd
+#     df_send(0x03, 0, track)
+#     last_track = track
+#     last_cmd = f"PLAY:{track}"
 
-# -------------------- MAIN SERVER FUNCTION --------------------
+# def df_pause():
+#     global last_cmd
+#     df_send(0x0E)
+#     last_cmd = "PAUSE"
+
+# def df_resume():
+#     global last_cmd
+#     df_send(0x0D)
+#     last_cmd = "RESUME"
+
+# def df_stop():
+#     global last_cmd
+#     df_send(0x16)
+#     last_cmd = "STOP"
+
+# def df_volume(vol):
+#     """Set volume 0–30."""
+#     global current_volume, last_cmd
+#     v = max(0, min(30, vol))
+#     df_send(0x06, 0, v)
+#     current_volume = v
+#     last_cmd = f"VOLUME:{v}"
+
+# # =========================
+# # LED / BUSY STATUS HANDLER
+# # =========================
+
+# def update_led():
+#     """Blink LED depending on DFPlayer state."""
+#     if busy.value() == 0:
+#         # Track is playing → fast blink
+#         led.value(1)
+#         time.sleep(0.05)
+#         led.value(0)
+#         time.sleep(0.05)
+#     else:
+#         # Idle → slow heartbeat blink
+#         led.value(1)
+#         time.sleep(0.3)
+#         led.value(0)
+#         time.sleep(1.2)
+
+# # =========================
+# # UDP SERVER SETUP
+# # =========================
+
+# def start_udp_server():
+#     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#     sock.settimeout(0.1)      # non-blocking for LED blinking
+#     sock.bind(("0.0.0.0", 8888))
+#     return sock
+
+# # =========================
+# # STATUS REPORT
+# # =========================
+
+# def get_status():
+#     return (
+#         f"BUSY:{busy.value()} "
+#         f"VOLUME:{current_volume} "
+#         f"LAST_CMD:{last_cmd} "
+#         f"LAST_TRACK:{last_track}"
+#     )
+
+# # =========================
+# # MAIN SERVER LOOP
+# # =========================
+
+# def main():
+#     sock = start_udp_server()
+#     print("📡 DFPlayer UDP Server running on port 8888")
+
+#     while True:
+#         # --- LED BLINK ALWAYS ---
+#         update_led()
+
+#         try:
+#             data, addr = sock.recvfrom(128)
+#         except OSError:
+#             continue   # No incoming message, continue blinking
+
+#         msg = data.decode().strip().upper()
+#         print("📩", addr, msg)
+
+#         # ----- Process Commands -----
+#         if msg.startswith("PLAY:"):
+#             track = int(msg.split(":")[1])
+#             df_play(track)
+#             sock.sendto(f"OK:PLAY {track}".encode(), addr)
+
+#         elif msg.startswith("VOL:"):
+#             vol = int(msg.split(":")[1])
+#             df_volume(vol)
+#             sock.sendto(f"OK:VOLUME {vol}".encode(), addr)
+
+#         elif msg == "PAUSE":
+#             df_pause()
+#             sock.sendto(b"OK:PAUSE", addr)
+
+#         elif msg == "RESUME":
+#             df_resume()
+#             sock.sendto(b"OK:RESUME", addr)
+
+#         elif msg == "STOP":
+#             df_stop()
+#             sock.sendto(b"OK:STOP", addr)
+
+#         elif msg == "STATUS":
+#             sock.sendto(get_status().encode(), addr)
+
+#         else:
+#             sock.sendto(b"ERR:UNKNOWN_CMD", addr)
 
 
-def run_server(ip):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.bind((ip, UDP_PORT))
-    print(f"📡 UDP server listening on {ip}:{UDP_PORT}")
-    set_volume(VOLUME)
 
-    last_busy = BUSY.value()
-    try:
-        while True:
-            # ------------------ CHECK FOR UDP MESSAGES ------------------
-            if s:
-                s.settimeout(0.1)
-                try:
-                    data, addr = s.recvfrom(128)
-                    msg = data.decode().strip().upper()
-                    print(f"📩 Received from {addr}: {msg}")
 
-                    feedback = ""
-                    if msg.startswith("PLAY:"):
-                        track_num = int(msg.split(":")[1])
-                        play_track(track_num)
-                        feedback = f"Playing track {track_num}"
-                    elif msg.startswith("VOL:"):
-                        vol = int(msg.split(":")[1])
-                        set_volume(vol)
-                        feedback = f"Volume set to {vol}"
-                    elif msg == "PAUSE":
-                        pause()
-                        feedback = "Paused"
-                    elif msg == "RESUME":
-                        resume()
-                        feedback = "Resumed"
-                    elif msg == "STOP":
-                        stop()
-                        feedback = "Stopped"
-                    elif msg == "EXIT":
-                        feedback = "Exiting server"
-                        s.sendto(feedback.encode(), addr)
-                        print("👋 Exiting on command...")
-                        break
-                    elif msg == "HELLO":
-                        feedback = "Hello received!"
-                    else:
-                        feedback = f"Unknown command: {msg}"
-
-                    # Send feedback back to client
-                    if feedback:
-                        s.sendto(feedback.encode(), addr)
-
-                except OSError:
-                    pass  # timeout, no message received
-
-            # ------------------ BUSY PIN MONITOR ------------------
-            current_busy = BUSY.value()
-            if current_busy != last_busy:
-                if current_busy == 0:
-                    print("▶️ DFPlayer is playing (BUSY LOW)")
-                else:
-                    print("✅ DFPlayer idle (BUSY HIGH)")
-                last_busy = current_busy
-
-            utime.sleep_ms(50)
-
-    finally:
-        s.close()
-        print("UDP server closed.")
+##### new  dfplayer_server.py file begins here #####
 '''
-# dfplayer_server.py
-import network
+non blocking version of dfplayer_server.py
+'''
+from machine import Pin, UART
 import socket
 import time
-from machine import UART, Pin
 
-# ===================== CONFIG =====================
-SSID = "NETGEAR48"
-PASSWORD = "waterypanda901"
-UDP_PORT = 8888
-STATIC_IP = "10.0.0.24"
-SUBNET = "255.255.255.0"
-GATEWAY = "10.0.0.1"
-# ===================================================
+# =========================
+# DFPLAYER SETUP
+# =========================
+uart = UART(2, baudrate=9600, tx=17, rx=16)
+busy = Pin(5, Pin.IN)     # DFPlayer BUSY pin (LOW = playing)
+led  = Pin(2, Pin.OUT)    # Status LED
 
-# ===================== DFPLAYER SETUP =====================rx 16 for esp32 and 13 for lilygo
-uart = UART(2, baudrate=9600, tx=17, rx=13)  # TX→RX, RX→TX
-BUSY = Pin(5, Pin.IN)                         # BUSY pin
-LED_BUSY = Pin(2, Pin.OUT)                    # Optional LED connected to BUSY
+current_volume = 20
+last_track = None
+last_cmd = "NONE"
 
-VOLUME = 20                                   # Default volume (0–30)
-# ===========================================================
+# Non-blocking LED state
+led_state = False
+last_blink = time.ticks_ms()
 
-# ------------------ Helper Functions ------------------
-def clear_uart():
-    while uart.any():
-        uart.read()
-
-def send_cmd(cmd, param1=0, param2=0, feedback=1):
-    """Send a 10-byte command to DFPlayer Mini"""
+# =========================
+# DFPLAYER LOW-LEVEL COMMAND
+# =========================
+def df_send(cmd, p1=0, p2=0):
     buf = bytearray(10)
     buf[0] = 0x7E
     buf[1] = 0xFF
     buf[2] = 0x06
     buf[3] = cmd
-    buf[4] = feedback & 1
-    buf[5] = param1
-    buf[6] = param2
-    checksum = 0xFFFF - (buf[1]+buf[2]+buf[3]+buf[4]+buf[5]+buf[6]) + 1
+    buf[4] = 0x00     # no feedback
+    buf[5] = p1
+    buf[6] = p2
+
+    checksum = 0xFFFF - (buf[1] + buf[2] + buf[3] +
+                         buf[4] + buf[5] + buf[6]) + 1
+
     buf[7] = (checksum >> 8) & 0xFF
     buf[8] = checksum & 0xFF
     buf[9] = 0xEF
+
     uart.write(buf)
 
-def read_resp(timeout_ms=500):
-    """Read DFPlayer response (optional)"""
-    start = time.ticks_ms()
-    resp = b""
-    while time.ticks_diff(time.ticks_ms(), start) < timeout_ms:
-        if uart.any():
-            resp += uart.read()
-        time.sleep_ms(10)
-    return resp
+# =========================
+# HIGH-LEVEL COMMANDS
+# =========================
+def df_play(track):
+    global last_track, last_cmd
+    df_send(0x03, 0, track)
+    last_track = track
+    last_cmd = f"PLAY:{track}"
 
-def play_track(num):
-    print("🎵 Playing track:", num)
-    clear_uart()
-    send_cmd(0x03, 0x00, num, feedback=1)
-    time.sleep_ms(50)
-    wait_for_play_start()
+def df_pause():
+    global last_cmd
+    df_send(0x0E)
+    last_cmd = "PAUSE"
 
-def set_volume(vol):
-    global VOLUME
-    vol = max(0, min(vol, 30))
-    VOLUME = vol
-    clear_uart()
-    send_cmd(0x06, 0x00, vol, feedback=1)
-    time.sleep_ms(50)
-    print("🔊 Volume set to:", vol)
+def df_resume():
+    global last_cmd
+    df_send(0x0D)
+    last_cmd = "RESUME"
 
-def pause():
-    send_cmd(0x0E, feedback=1)
-    print("⏸️ Paused")
+def df_stop():
+    global last_cmd
+    df_send(0x16)
+    last_cmd = "STOP"
 
-def resume():
-    send_cmd(0x0D, feedback=1)
-    print("▶️ Resumed")
+def df_volume(vol):
+    global current_volume, last_cmd
+    v = max(0, min(30, vol))
+    df_send(0x06, 0, v)
+    current_volume = v
+    last_cmd = f"VOLUME:{v}"
 
-def stop():
-    send_cmd(0x16, feedback=1)
-    print("⏹️ Stopped")
-
-def wait_for_play_start(timeout_ms=1000):
-    """Wait until BUSY goes LOW indicating playback started"""
-    start = time.ticks_ms()
-    while BUSY.value() != 0:
-        LED_BUSY.value(0)  # LED off when not playing
-        if time.ticks_diff(time.ticks_ms(), start) > timeout_ms:
-            print("⚠️ Playback did not start (BUSY HIGH)")
-            return False
-        time.sleep_ms(10)
-    print("▶️ Playback started (BUSY LOW)")
-    LED_BUSY.value(1)  # LED on during play
-    return True
-
-def update_busy_led():
-    """Call this periodically to reflect BUSY pin on LED"""
-    LED_BUSY.value(0 if BUSY.value() else 1)
-
-# ===================== WIFI SETUP =====================
-def connect_wifi():
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    # wlan.ifconfig((STATIC_IP, SUBNET, GATEWAY, STATIC_IP))# incorrect last should be DNS server not static ip
-    wlan.ifconfig((STATIC_IP, SUBNET, GATEWAY, "8.8.8.8"))
-    if not wlan.isconnected():
-        print("📡 Connecting to Wi-Fi...")
-        wlan.connect(SSID, PASSWORD)
-        for _ in range(20):
-            if wlan.isconnected():
-                break
-            time.sleep(0.5)
-    if wlan.isconnected():
-        print("✅ Wi-Fi connected:", wlan.ifconfig())
-        return wlan
+# =========================
+# LED / BUSY STATUS HANDLER (non-blocking)
+# =========================
+def update_led():
+    global led_state, last_blink
+    now = time.ticks_ms()
+    if busy.value() == 0:
+        interval = 50  # fast blink playing
     else:
-        print("❌ Could not connect to Wi-Fi.")
-        return None
+        interval = 1200  # slow blink idle
 
-# ===================== MAIN =====================
+    if time.ticks_diff(now, last_blink) >= interval:
+        led_state = not led_state
+        led.value(led_state)
+        last_blink = now
+
+# =========================
+# UDP SERVER SETUP
+# =========================
+def start_udp_server():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(0.05)      # short timeout for non-blocking LED
+    sock.bind(("0.0.0.0", 8888))
+    return sock
+
+# =========================
+# STATUS REPORT
+# =========================
+def get_status():
+    return (
+        f"BUSY:{busy.value()} "
+        f"VOLUME:{current_volume} "
+        f"LAST_CMD:{last_cmd} "
+        f"LAST_TRACK:{last_track}"
+    )
+
+# =========================
+# MAIN SERVER LOOP
+# =========================
 def main():
-    wlan = connect_wifi()
-    if wlan is None:
-        print("Exiting — no Wi-Fi")
-        return
-
-    ip = wlan.ifconfig()[0]
-    print(f"📡 UDP server listening on {ip}:{UDP_PORT}")
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.bind((ip, UDP_PORT))
-
-    set_volume(VOLUME)
+    sock = start_udp_server()
+    print("📡 DFPlayer UDP Server running on port 8888")
 
     while True:
+        # LED always updated
+        update_led()
+
+        # Handle incoming UDP messages
         try:
-            data, addr = s.recvfrom(128)
-            msg = data.decode().strip().upper()
-            print(f"📩 Received from {addr}: {msg}")
+            data, addr = sock.recvfrom(128)
+        except OSError:
+            continue  # no data, continue loop
 
-            if msg.startswith("PLAY:"):
-                track_num = int(msg.split(":")[1])
-                play_track(track_num)
-            elif msg.startswith("VOL:"):
-                set_volume(int(msg.split(":")[1]))
-            elif msg == "PAUSE":
-                pause()
-            elif msg == "RESUME":
-                resume()
-            elif msg == "STOP":
-                stop()
-            elif msg == "EXIT":
-                print("👋 Exiting on command...")
-                break
-            elif msg == "HELLO":
-                print("👋 Hello received!")
-            else:
-                print("Unknown command:", msg)
+        msg = data.decode().strip().upper()
+        print("📩", addr, msg)
 
-            # Update LED according to BUSY pin
-            update_busy_led()
+        # ----- Process Commands -----
+        if msg.startswith("PLAY:"):
+            track = int(msg.split(":")[1])
+            df_play(track)
+            sock.sendto(f"OK:PLAY {track}".encode(), addr)
 
-        except Exception as e:
-            print("⚠️ UDP error:", e)
-            time.sleep(1)
+        elif msg.startswith("VOL:"):
+            vol = int(msg.split(":")[1])
+            df_volume(vol)
+            sock.sendto(f"OK:VOLUME {vol}".encode(), addr)
 
-    s.close()
-    print("UDP server closed.")
+        elif msg == "PAUSE":
+            df_pause()
+            sock.sendto(b"OK:PAUSE", addr)
 
-# Run main
+        elif msg == "RESUME":
+            df_resume()
+            sock.sendto(b"OK:RESUME", addr)
+
+        elif msg == "STOP":
+            df_stop()
+            sock.sendto(b"OK:STOP", addr)
+
+        elif msg == "STATUS":
+            sock.sendto(get_status().encode(), addr)
+
+        else:
+            sock.sendto(b"ERR:UNKNOWN_CMD", addr)
 if __name__ == "__main__":
-    main()
+    main()  # for testing dfplayer_server.py independently
