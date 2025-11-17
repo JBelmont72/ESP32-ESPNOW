@@ -332,3 +332,66 @@ def main():
             sock.sendto(b"ERR:UNKNOWN_CMD", addr)
 if __name__ == "__main__":
     main()  # for testing dfplayer_server.py independently
+    
+    
+'''
+Version below implements a second “exit” button on your ESP32 that stops the dfplayer_server.main() loop and returns control to main.py. Since MicroPython doesn’t really “un-import” a module, the cleanest way is to have your dfplayer_server.main() loop check a global running flag and exit if it’s cleared. Then main.py regains control and can let you press the short button again to restart the server.
+dfplayer_server.py (with exit flag)
+Add a global running variable and modify the main loop
+'''
+# At the top of dfplayer_server.py
+running = True  # New: control loop from main.py
+
+# =========================
+# MAIN SERVER LOOP
+# =========================
+def main():
+    global running
+    sock = start_udp_server()
+    print("📡 DFPlayer UDP Server running on port 8888")
+
+    running = True  # ensure flag is True when starting
+    while running:
+        update_led()
+
+        # Handle incoming UDP messages
+        try:
+            data, addr = sock.recvfrom(128)
+        except OSError:
+            continue  # no data, continue loop
+
+        msg = data.decode().strip().upper()
+        print("📩", addr, msg)
+
+        # ----- Process Commands -----
+        if msg.startswith("PLAY:"):
+            track = int(msg.split(":")[1])
+            df_play(track)
+            sock.sendto(f"OK:PLAY {track}".encode(), addr)
+
+        elif msg.startswith("VOL:"):
+            vol = int(msg.split(":")[1])
+            df_volume(vol)
+            sock.sendto(f"OK:VOLUME {vol}".encode(), addr)
+
+        elif msg == "PAUSE":
+            df_pause()
+            sock.sendto(b"OK:PAUSE", addr)
+
+        elif msg == "RESUME":
+            df_resume()
+            sock.sendto(b"OK:RESUME", addr)
+
+        elif msg == "STOP":
+            df_stop()
+            sock.sendto(b"OK:STOP", addr)
+
+        elif msg == "STATUS":
+            sock.sendto(get_status().encode(), addr)
+
+        else:
+            sock.sendto(b"ERR:UNKNOWN_CMD", addr)
+
+    # Clean exit
+    sock.close()
+    print("DFPlayer UDP Server stopped")
