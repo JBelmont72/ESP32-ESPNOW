@@ -3,8 +3,12 @@ ADC_BLE_peripheral.py
 3 d verision   see the obsidian file for details
 2025/Bluetooth.md	obsidian
 https://chatgpt.com/g/g-Z7UTI21rg-python-teacher/c/691153b7-0624-832e-9bf2-96bf644e7855
+program 1 sends adc value.
+program 2 builds on this by adding RECEIVING command to turn led on and offand does so
+program 2 works great
 '''
-import aioble
+'''
+import aioble       # program one
 import bluetooth
 import uasyncio as asyncio
 from machine import ADC, Pin
@@ -44,5 +48,78 @@ async def uart_peripheral():
             tx.notify(conn)
             print("Sent:", msg)
             await asyncio.sleep(0.5)
+
+asyncio.run(uart_peripheral())
+'''
+'''
+17 Nov 2025 single concept:
+Add LED ON/OFF commands from central → peripheral
+And yes — it is perfectly OK to make the motor board the peripheral.
+That is exactly what phones expect, so your design choice is solid.
+We will keep that model:
+Peripheral = hardware board (motors, LEDs, servos)
+Central = phone / browser / laptop / or another ESP32
+This keeps everything consistent as you learn.
+🟢 Step 1 — Peripheral: handle "LED_ON" and "LED_OFF"
+Very small addition to your working ADC peripheral.
+Add a LED pin:
+'''
+
+import aioble       # program  two   goes with different central: Nov2025/Bluetooth/ESP_UART_central_button_led.py
+import bluetooth
+import uasyncio as asyncio
+from machine import ADC, Pin
+led=Pin(22,Pin.OUT)
+_UART_SERVICE_UUID = bluetooth.UUID("6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
+_UART_RX_CHAR_UUID = bluetooth.UUID("6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
+_UART_TX_CHAR_UUID = bluetooth.UUID("6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
+
+adc = ADC(Pin(35))
+adc.atten(ADC.ATTN_11DB)
+
+# ---- keep smoothing value in a global variable ----
+smoothed_val = 0
+
+async def read_adc(alpha=0.8):
+    global smoothed_val
+    raw = adc.read()
+    smoothed_val = alpha * smoothed_val + (1 - alpha) * raw
+    return int(smoothed_val)
+
+async def uart_peripheral():
+    service = aioble.Service(_UART_SERVICE_UUID)
+    rx = aioble.Characteristic(service, _UART_RX_CHAR_UUID, write=True)
+    tx = aioble.Characteristic(service, _UART_TX_CHAR_UUID, read=True, notify=True)
+    aioble.register_services(service)
+
+    print("Advertising as ESP32_ADC...")
+    async with await aioble.advertise(
+        interval_us=200_000, name="ESP32_ADC", services=[_UART_SERVICE_UUID]
+    ) as conn:
+
+        print("Connected:", conn.device)
+        while conn.is_connected():
+            val = await read_adc()
+            msg = f"ADC:{val}"
+            if conn.is_connected():
+                tx.write(msg.encode("utf-8"))
+                tx.notify(conn)
+
+            # tx.write(msg.encode("utf-8"))
+            # if conn.is_connected(): # added  the condition to prevent crash error
+            #     tx.notify(conn)
+
+            print("Sent:", msg)
+            await asyncio.sleep(0.5)
+            
+            if rx.written(): # added this condition the the 'led' object above
+                cmd = rx.read().decode('utf-8')
+                print("Received command:", cmd)
+
+                if cmd == "Ledon":# changed from 'LED_ON'
+                    led.value(1)
+                elif cmd == "Ledoff":
+                    led.value(0)
+
 
 asyncio.run(uart_peripheral())

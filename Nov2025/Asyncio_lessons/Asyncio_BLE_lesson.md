@@ -324,6 +324,11 @@ obsidian-2025/Bluetooth.md
 /Users/judsonbelmont/Documents/SharedFolders/ESP32/ESP32-ESPNOW/Nov2025/Bluetooth
 
 '''
-ADC_BLE_peripheral.py
+ADC_BLE_peripheral.py will advdertise to:  /Users/judsonbelmont/Documents/SharedFolders/ESP32/ESP32-ESPNOW/Nov2025/Bluetooth/ESP_UART_central.py
 can use with the ESP_UART_central.py which will receive the data from the ADC potentiometer
 /Users/judsonbelmont/Documents/SharedFolders/ESP32/ESP32-ESPNOW/Nov2025/Bluetooth/ADC_BLE_peripheral.py
+
+17 nov 2025. normally the central would be conroller and the peripheral ould send data:
+ADC_BLE_peripheral.py fits this model with ESP_UART.py the central.
+
+I will use the iphone, the browser and an esp32 to be the controllers and another esp32 to be the peripheral.  

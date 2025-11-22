@@ -115,44 +115,44 @@
 
 
 
-from machine import UART, Pin
-import time
+# from machine import UART, Pin
+# import time
 
-uart = UART(2, baudrate=9600, tx=Pin(17), rx=Pin(16))  # adjust if needed
+# uart = UART(2, baudrate=9600, tx=Pin(17), rx=Pin(16))  # adjust if needed
 
-buf = bytearray()
+# buf = bytearray()
 
-def find_frames(b):
-    frames = []
-    i = 0
-    while i < len(b):
-        # find start byte
-        if b[i] != 0x7E:
-            i += 1
-            continue
-        # need at least 10 bytes for full frame
-        if i + 10 <= len(b):
-            if b[i+9] == 0xEF:
-                frames.append(bytes(b[i:i+10]))
-                i += 10
-                continue
-            else:
-                # bad frame: skip this start
-                i += 1
-                continue
-        else:
-            break
-    return frames, b[i:]  # leftover
+# def find_frames(b):
+#     frames = []
+#     i = 0
+#     while i < len(b):
+#         # find start byte
+#         if b[i] != 0x7E:
+#             i += 1
+#             continue
+#         # need at least 10 bytes for full frame
+#         if i + 10 <= len(b):
+#             if b[i+9] == 0xEF:
+#                 frames.append(bytes(b[i:i+10]))
+#                 i += 10
+#                 continue
+#             else:
+#                 # bad frame: skip this start
+#                 i += 1
+#                 continue
+#         else:
+#             break
+#     return frames, b[i:]  # leftover
 
-print("Listening for complete DFPlayer frames...")
-while True:
-    if uart.any():
-        data = uart.read()
-        if not data:
-            continue
-        buf.extend(data)
-        frames, leftover = find_frames(buf)
-        buf = bytearray(leftover)  # keep partial tail
-        for f in frames:
-            print("FRAME:", " ".join("{:02X}".format(x) for x in f))
-    time.sleep(0.02)
+# print("Listening for complete DFPlayer frames...")
+# while True:
+#     if uart.any():
+#         data = uart.read()
+#         if not data:
+#             continue
+#         buf.extend(data)
+#         frames, leftover = find_frames(buf)
+#         buf = bytearray(leftover)  # keep partial tail
+#         for f in frames:
+#             print("FRAME:", " ".join("{:02X}".format(x) for x in f))
+#     time.sleep(0.02)
